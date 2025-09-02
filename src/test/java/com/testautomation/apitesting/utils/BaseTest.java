@@ -9,7 +9,10 @@ import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
+import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.http.ContentType;
 
 public class BaseTest {
 	
@@ -18,6 +21,11 @@ public class BaseTest {
 	@BeforeMethod
 	public void beforeMethod() {
 		//RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+		RestAssured.requestSpecification = new RequestSpecBuilder()
+				.setBaseUri(PropertyUtils.getProperty("base.uri"))
+				.addFilter(new AllureRestAssured())
+				.setContentType(ContentType.JSON)
+				.build();
 	}
 	
 	@AfterMethod

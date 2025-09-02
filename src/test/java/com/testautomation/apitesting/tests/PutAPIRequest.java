@@ -1,103 +1,73 @@
 package com.testautomation.apitesting.tests;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.apache.commons.io.FileUtils;
 import org.hamcrest.Matchers;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.jayway.jsonpath.JsonPath;
-import com.testautomation.apitesting.utils.FileNameConstants;
+import com.testautomation.apitesting.pojos.Auth;
+import com.testautomation.apitesting.pojos.Booking;
+import com.testautomation.apitesting.pojos.BookingDates;
+import com.testautomation.apitesting.utils.BaseTest;
 
 import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import net.minidev.json.JSONArray;
 
-public class PutAPIRequest {
-	
-	@Test
-	public void putAPIRequest() {
-		
-		try {
-			String postAPIRequestBody = FileUtils.readFileToString(new File(FileNameConstants.POST_API_REQUEST_BODY),"UTF-8");
-		
-			String tokenAPIRequestBody = FileUtils.readFileToString(new File(FileNameConstants.TOKEN_API_REQUEST_BODY),"UTF-8");
-			
-			String putAPIRequestBody = FileUtils.readFileToString(new File(FileNameConstants.PUT_API_REQUEST_BODY),"UTF-8");
-			
-			//post api call
-			Response response =
-			RestAssured
-					.given()
-						.contentType(ContentType.JSON)
-						.body(postAPIRequestBody)
-						.baseUri("https://restful-booker.herokuapp.com/booking")
-					.when()
-						.post()
-					.then()
-						.assertThat()
-						.statusCode(200)
-					.extract()
-						.response();
-			
-		JSONArray jsonArray = JsonPath.read(response.body().asString(),"$.booking..firstname");
-		String firstName = (String) jsonArray.get(0);
-		
-		Assert.assertEquals(firstName, "api testing");
-		
-		int bookingId = JsonPath.read(response.body().asString(),"$.bookingid");
-		
-		//get api call
-		RestAssured
-				.given()
-					.contentType(ContentType.JSON)
-					.baseUri("https://restful-booker.herokuapp.com/booking")
-				.when()
-					.get("/{bookingId}",bookingId)
-				.then()
-					.assertThat()
-					.statusCode(200);
-		
-		//token generation
-		Response tokenAPIResponse =
-		RestAssured
-				.given()
-					.contentType(ContentType.JSON)
-					.body(tokenAPIRequestBody)
-					.baseUri("https://restful-booker.herokuapp.com/auth")
-				.when()
-					.post()
-				.then()
-					.assertThat()
-					.statusCode(200)
-				.extract()
-					.response();
-		
-		String token = JsonPath.read(tokenAPIResponse.body().asString(),"$.token");
-		
-		//put api call
-		RestAssured
-			.given()
-				.contentType(ContentType.JSON)
-				.body(putAPIRequestBody)
-				.header("Cookie", "token="+token)
-				.baseUri("https://restful-booker.herokuapp.com/booking")
-			.when()
-				.put("/{bookingId}",bookingId)
-			.then()
-				.assertThat()
-				.statusCode(200)
-				.body("firstname", Matchers.equalTo("Specflow"))
-				.body("lastname", Matchers.equalTo("Selenium C#"));
-		
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-	}
+public class PutAPIRequest extends BaseTest {
 
+    @Test
+    public void putAPIRequest() {
+        // Create a new booking to update
+        BookingDates bookingDates = new BookingDates("2023-04-01", "2023-04-05");
+        Booking booking = new Booking("original", "user", "lunch", 150, true, bookingDates);
+
+        Response createResponse = RestAssured
+                .given()
+                    .body(booking)
+                .when()
+                    .post("/booking")
+                .then()
+                    .assertThat()
+                    .statusCode(200)
+                .extract()
+                    .response();
+
+        int bookingId = createResponse.path("bookingid");
+
+        // Get auth token
+        String token = getAuthToken();
+
+        // Prepare the updated request body
+        BookingDates updatedBookingDates = new BookingDates("2023-04-01", "2023-04-10");
+        Booking updatedBooking = new Booking("updated", "user", "dinner", 200, false, updatedBookingDates);
+
+        // Perform the PUT request
+        RestAssured
+            .given()
+                .body(updatedBooking)
+                .header("Cookie", "token=" + token)
+            .when()
+                .put("/booking/{bookingId}", bookingId)
+            .then()
+                .assertThat()
+                .statusCode(200)
+                .body("firstname", Matchers.equalTo("updated"))
+                .body("totalprice", Matchers.equalTo(200))
+                .body("bookingdates.checkout", Matchers.equalTo("2023-04-10"));
+    }
+
+    private String getAuthToken() {
+        Auth auth = new Auth("admin", "password123");
+
+        Response response = RestAssured
+                .given()
+                    .body(auth)
+                .when()
+                    .post("/auth")
+                .then()
+                    .assertThat()
+                    .statusCode(200)
+                .extract()
+                    .response();
+
+        return response.path("token");
+    }
 }

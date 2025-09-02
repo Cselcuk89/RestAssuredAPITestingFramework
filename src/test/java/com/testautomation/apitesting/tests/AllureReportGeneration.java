@@ -1,20 +1,17 @@
 package com.testautomation.apitesting.tests;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import static org.hamcrest.Matchers.*;
-import org.testng.Assert;
+import org.hamcrest.Matchers;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.jayway.jsonpath.JsonPath;
-import com.testautomation.apitesting.listener.RestAssuredListener;
+import com.testautomation.apitesting.pojos.Auth;
+import com.testautomation.apitesting.pojos.Booking;
+import com.testautomation.apitesting.pojos.BookingDates;
 import com.testautomation.apitesting.utils.BaseTest;
-import com.testautomation.apitesting.utils.FileNameConstants;
 
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -22,198 +19,137 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
-import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import net.minidev.json.JSONArray;
 
 @Epic("Epic-01")
 @Feature("Create Update Delete Booking")
 public class AllureReportGeneration extends BaseTest {
 
-	private static final Logger logger = LogManager.getLogger(AllureReportGeneration.class);
+    private int bookingId;
+    private String token;
 
-	@Story("Story 1")
-	@Test(description = "end to end api testing")
-	@Description("end to end testing")
-	@Severity(SeverityLevel.CRITICAL)
-	public void e2eAPIRequest() {
+    @BeforeClass
+    public void setupE2ETest() {
+        // Create a booking for the e2e test
+        BookingDates bookingDates = new BookingDates("2023-07-01", "2023-07-10");
+        Booking booking = new Booking("allure", "tester", "breakfast", 400, true, bookingDates);
 
-		logger.info("e2eAPIRequest test execution started...");
+        Response response = RestAssured.given()
+                .body(booking)
+                .when()
+                .post("/booking")
+                .then()
+                .assertThat().statusCode(200)
+                .extract().response();
+        bookingId = response.path("bookingid");
 
-		try {
-			String postAPIRequestBody = FileUtils.readFileToString(new File(FileNameConstants.POST_API_REQUEST_BODY),
-					"UTF-8");
-			String tokenAPIRequestBody = FileUtils.readFileToString(new File(FileNameConstants.TOKEN_API_REQUEST_BODY),
-					"UTF-8");
-			String putAPIRequestBody = FileUtils.readFileToString(new File(FileNameConstants.PUT_API_REQUEST_BODY),
-					"UTF-8");
-			String patchAPIRequestBody = FileUtils.readFileToString(new File(FileNameConstants.PATCH_API_REQUEST_BODY),
-					"UTF-8");
+        // Get auth token
+        Auth auth = new Auth("admin", "password123");
+        Response authResponse = RestAssured.given()
+                .body(auth)
+                .when()
+                .post("/auth")
+                .then()
+                .assertThat().statusCode(200)
+                .extract().response();
+        token = authResponse.path("token");
+    }
 
-			// post api call
-			Response response = RestAssured
-					.given().filter(new AllureRestAssured())
-						.filter(new RestAssuredListener())
-						.contentType(ContentType.JSON).body(postAPIRequestBody)
-						.baseUri("https://restful-booker.herokuapp.com/booking")
-					.when()
-						.post()
-					.then()
-						.assertThat()
-						.statusCode(200)
-					.extract()
-						.response();
+    @Story("Story 1: End-to-End Flow")
+    @Test(description = "Get booking details", priority = 1)
+    @Description("Verify that the created booking can be retrieved")
+    @Severity(SeverityLevel.NORMAL)
+    public void getBookingTest() {
+        RestAssured
+            .given()
+            .when()
+                .get("/booking/{bookingId}", bookingId)
+            .then()
+                .assertThat()
+                .statusCode(200);
+    }
 
-			JSONArray jsonArray = JsonPath.read(response.body().asString(), "$.booking..firstname");
-			String firstName = (String) jsonArray.get(0);
+    @Story("Story 1: End-to-End Flow")
+    @Test(description = "Update booking details", priority = 2)
+    @Description("Verify that the booking can be updated with a PUT request")
+    @Severity(SeverityLevel.CRITICAL)
+    public void updateBookingTest() {
+        BookingDates updatedBookingDates = new BookingDates("2023-07-01", "2023-07-15");
+        Booking updatedBooking = new Booking("allure-updated", "tester", "lunch", 450, false, updatedBookingDates);
 
-			Assert.assertEquals(firstName, "api testing");
+        RestAssured
+            .given()
+                .body(updatedBooking)
+                .header("Cookie", "token=" + token)
+            .when()
+                .put("/booking/{bookingId}", bookingId)
+            .then()
+                .assertThat()
+                .statusCode(200)
+                .body("firstname", Matchers.equalTo("allure-updated"))
+                .body("totalprice", Matchers.equalTo(450));
+    }
 
-			int bookingId = JsonPath.read(response.body().asString(), "$.bookingid");
-			System.out.println("Booking Id : " + bookingId);
+    @Story("Story 1: End-to-End Flow")
+    @Test(description = "Partially update booking details", priority = 3)
+    @Description("Verify that the booking can be partially updated with a PATCH request")
+    @Severity(SeverityLevel.CRITICAL)
+    public void patchBookingTest() {
+        Map<String, Object> patchBody = new HashMap<>();
+        patchBody.put("firstname", "allure-patched");
 
-			// get api call
-			RestAssured
-				.given().filter(new AllureRestAssured())
-					.filter(new RestAssuredListener())
-					.contentType(ContentType.JSON)
-					.baseUri("https://restful-booker.herokuapp.com/booking")
-				.when()
-					.get("/{bookingId}", bookingId)
-				.then()
-					.assertThat()
-					.statusCode(200);
+        RestAssured
+            .given()
+                .body(patchBody)
+                .header("Cookie", "token=" + token)
+            .when()
+                .patch("/booking/{bookingId}", bookingId)
+            .then()
+                .assertThat()
+                .statusCode(200)
+                .body("firstname", Matchers.equalTo("allure-patched"));
+    }
 
-			// token generation
-			Response tokenAPIResponse = RestAssured
-					.given().filter(new AllureRestAssured())
-						.filter(new RestAssuredListener())
-						.contentType(ContentType.JSON)
-						.body(tokenAPIRequestBody)
-						.baseUri("https://restful-booker.herokuapp.com/auth")
-					.when()
-						.post()
-					.then()
-						.assertThat()
-						.statusCode(200)
-					.extract()
-						.response();
+    @AfterClass
+    public void cleanup() {
+        // Delete the booking after all tests are done
+        RestAssured
+            .given()
+                .header("Cookie", "token=" + token)
+            .when()
+                .delete("/booking/{bookingId}", bookingId)
+            .then()
+                .assertThat()
+                .statusCode(201);
+    }
 
-			String token = JsonPath.read(tokenAPIResponse.body().asString(), "$.token");
-			System.out.println("Token Id : " + token);
+    @Story("Story 2: Create and Verify")
+    @Test(description = "Create and verify a new booking")
+    @Description("A simplified test to create a booking and verify its creation")
+    @Severity(SeverityLevel.BLOCKER)
+    public void createAndVerifyBookingTest() {
+        // Create a booking
+        BookingDates bookingDates = new BookingDates("2023-08-01", "2023-08-05");
+        Booking booking = new Booking("simple", "test", "none", 100, true, bookingDates);
 
-			// put api call
-			RestAssured
-			.given().filter(new AllureRestAssured())
-				.filter(new RestAssuredListener())
-				.contentType(ContentType.JSON)
-				.body(putAPIRequestBody)
-				.header("Cookie", "token=" + token)
-				.baseUri("https://restful-booker.herokuapp.com/booking")
-			.when()
-				.put("/{bookingId}", bookingId)
-			.then()
-				.assertThat()
-				.statusCode(200).body("firstname", equalTo("Specflow"))
-				.body("lastname", equalTo("Selenium C#"));
+        Response response = RestAssured.given()
+                .body(booking)
+                .when()
+                .post("/booking")
+                .then()
+                .assertThat().statusCode(200)
+                .extract().response();
+        int newBookingId = response.path("bookingid");
 
-			// patch api call
-			RestAssured
-			.given().filter(new AllureRestAssured())
-				.filter(new RestAssuredListener())
-				.contentType(ContentType.JSON)
-				.body(patchAPIRequestBody)
-				.header("Cookie", "token=" + token)
-				.baseUri("https://restful-booker.herokuapp.com/booking")
-			.when()
-				.patch("/{bookingId}", bookingId)
-			.then()
-				.assertThat()
-				.statusCode(200)
-				.body("firstname", equalTo("Testers Talk"));
-
-			// delete api call
-			RestAssured
-			.given().filter(new AllureRestAssured())
-				.filter(new RestAssuredListener())
-				.contentType(ContentType.JSON)
-				.header("Cookie", "token=" + token)
-				.baseUri("https://restful-booker.herokuapp.com/booking")
-			.when()
-				.delete("/{bookingId}", bookingId)
-			.then()
-				.assertThat()
-				.statusCode(201);
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		logger.info("e2eAPIRequest test execution ended...");
-
-	}
-	
-	@Story("Story 1")
-	@Test(description = "e2eAPITest2")
-	@Description("end to end testing")
-	@Severity(SeverityLevel.BLOCKER)
-	public void e2eAPITest2() {
-
-		logger.info("e2eAPIRequest test execution started...");
-
-		try {
-			String postAPIRequestBody = FileUtils.readFileToString(new File(FileNameConstants.POST_API_REQUEST_BODY),
-					"UTF-8");
-			String tokenAPIRequestBody = FileUtils.readFileToString(new File(FileNameConstants.TOKEN_API_REQUEST_BODY),
-					"UTF-8");
-			String putAPIRequestBody = FileUtils.readFileToString(new File(FileNameConstants.PUT_API_REQUEST_BODY),
-					"UTF-8");
-			String patchAPIRequestBody = FileUtils.readFileToString(new File(FileNameConstants.PATCH_API_REQUEST_BODY),
-					"UTF-8");
-
-			// post api call
-			Response response = RestAssured
-					.given().filter(new AllureRestAssured())
-						.filter(new RestAssuredListener())
-						.contentType(ContentType.JSON).body(postAPIRequestBody)
-						.baseUri("https://restful-booker.herokuapp.com/booking")
-					.when()
-						.post()
-					.then()
-						.assertThat()
-						.statusCode(200)
-					.extract()
-						.response();
-
-			JSONArray jsonArray = JsonPath.read(response.body().asString(), "$.booking..firstname");
-			String firstName = (String) jsonArray.get(0);
-
-			Assert.assertEquals(firstName, "api testing");
-
-			int bookingId = JsonPath.read(response.body().asString(), "$.bookingid");
-			System.out.println("Booking Id : " + bookingId);
-
-			// get api call
-			RestAssured
-				.given().filter(new AllureRestAssured())
-					.filter(new RestAssuredListener())
-					.contentType(ContentType.JSON)
-					.baseUri("https://restful-booker.herokuapp.com/booking")
-				.when()
-					.get("/{bookingId}", bookingId)
-				.then()
-					.assertThat()
-					.statusCode(200);
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		logger.info("e2eAPIRequest test execution ended...");
-
-	}
-
-
+        // Verify the booking
+        RestAssured
+            .given()
+            .when()
+                .get("/booking/{bookingId}", newBookingId)
+            .then()
+                .assertThat()
+                .statusCode(200)
+                .body("firstname", Matchers.equalTo("simple"));
+    }
 }
