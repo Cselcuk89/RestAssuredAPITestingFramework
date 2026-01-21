@@ -10,6 +10,9 @@ target/
 test-output/
 allure-results/
 
+# Cucumber reports
+cucumber-reports/
+
 # Logs
 logs/
 *.log

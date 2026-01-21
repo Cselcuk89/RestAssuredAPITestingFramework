@@ -1,5 +1,124 @@
 #### Rest Assured API Automation Testing Framework
 
+## Framework Features
+
+### Industry Best Practices Implemented
+- **Cucumber BDD Layer**: Feature files with Gherkin syntax for readable test scenarios
+- **Builder Pattern**: `ApiClient` class for flexible request configuration
+- **Page Object Model equivalent**: Centralized API endpoints in `Endpoints` class
+- **Environment Configuration**: Multi-environment support (dev, staging, prod)
+- **Custom Exceptions**: `ApiException` for better error handling and debugging
+- **Response Validation**: Fluent `ResponseValidator` utility for clean assertions
+- **Test Context**: Shared state management for Cucumber scenarios
+- **Allure Reporting**: Integrated reporting for both TestNG and Cucumber tests
+- **Retry Mechanism**: Built-in test retry for flaky tests
+
+### Supported APIs
+
+#### Restful Booker API (https://restful-booker.herokuapp.com)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/auth` | POST | Create authentication token |
+| `/booking` | GET | Get all booking IDs |
+| `/booking` | POST | Create a new booking |
+| `/booking/{id}` | GET | Get booking by ID |
+| `/booking/{id}` | PUT | Update booking |
+| `/booking/{id}` | PATCH | Partial update booking |
+| `/booking/{id}` | DELETE | Delete booking |
+| `/ping` | GET | Health check endpoint |
+
+#### Postman Echo API (http://postman-echo.com)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/get` | GET | Echo GET request |
+| `/post` | POST | Echo POST request with body |
+| `/put` | PUT | Echo PUT request |
+| `/patch` | PATCH | Echo PATCH request |
+| `/delete` | DELETE | Echo DELETE request |
+| `/headers` | GET | Get request headers |
+| `/cookies` | GET | Get request cookies |
+| `/cookies/set` | GET | Set cookies |
+| `/status/{code}` | GET | Return specific status code |
+| `/basic-auth` | GET | Test basic authentication |
+| `/ip` | GET | Get client IP |
+
+### Project Structure
+```
+src/test/java/com/testautomation/apitesting/
+├── client/              # API client abstraction
+│   └── ApiClient.java   # Builder pattern for API requests
+├── cucumber/            # Cucumber BDD layer
+│   ├── context/         # Test context for state management
+│   ├── hooks/           # Setup/teardown hooks
+│   ├── runner/          # TestNG Cucumber runner
+│   └── steps/           # Step definitions
+│       ├── BookingSteps.java      # Booking API steps
+│       ├── HealthCheckSteps.java  # Health check steps
+│       └── PostmanEchoSteps.java  # Postman Echo steps
+├── exceptions/          # Custom exceptions
+├── listener/            # TestNG listeners
+├── pojos/               # Request/Response models
+│   ├── Auth.java
+│   ├── Booking.java
+│   ├── BookingDates.java
+│   ├── EchoResponse.java
+│   ├── CookiesResponse.java
+│   ├── HeadersResponse.java
+│   └── IpResponse.java
+├── tests/               # TestNG test classes
+│   ├── HealthCheckTest.java
+│   ├── PostmanEchoTest.java
+│   └── ...
+└── utils/               # Utilities and helpers
+
+src/test/resources/
+├── features/            # Cucumber feature files
+│   ├── booking.feature
+│   ├── healthcheck.feature
+│   └── postman-echo.feature
+├── config.properties    # Configuration properties
+└── ...                  # Test data files
+```
+
+### Running Tests
+
+#### Run All Tests
+```bash
+mvn test -Dsuitefilename=suites/all-tests-suite.xml
+```
+
+#### Run Cucumber BDD Tests
+```bash
+mvn test -Dsuitefilename=suites/cucumber-suite.xml
+```
+
+#### Run Postman Echo Tests
+```bash
+mvn test -Dsuitefilename=suites/postman-echo-suite.xml
+```
+
+#### Run Health Check Tests
+```bash
+mvn test -Dsuitefilename=suites/healthcheck-suite.xml
+```
+
+#### Run with specific tags
+```bash
+mvn test -Dcucumber.filter.tags="@smoke" -Dsuitefilename=suites/cucumber-suite.xml
+```
+
+#### Run with specific environment
+```bash
+mvn test -Denv=staging -Dsuitefilename=suites/cucumber-suite.xml
+```
+
+#### Run TestNG Tests
+```bash
+mvn test -Dsuitefilename=testng.xml
+```
+
+---
+
 * ## API Automation Testing Using Rest Assured Full Course Part-01 - https://www.youtube.com/watch?v=o9KJhGHl49M&list=PLUeDIlio4THGL7lQXQwxsV9re_i0U2b0Q&index=3
 * ## API Automation Testing Using Rest Assured Full Course Part-02 - https://www.youtube.com/watch?v=kay86__5eTg&list=PLUeDIlio4THGL7lQXQwxsV9re_i0U2b0Q&index=4
 

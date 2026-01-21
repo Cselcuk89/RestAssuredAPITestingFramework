@@ -6,6 +6,12 @@
 	<name>Rest Assured API Testing Tutorial</name>
 	<description>Rest Assured API Testing Tutorial demo</description>
 
+	<properties>
+		<cucumber.version>7.14.0</cucumber.version>
+		<lombok.version>1.18.30</lombok.version>
+		<allure.version>2.24.0</allure.version>
+	</properties>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -16,6 +22,13 @@
 					<source>1.8</source>
 					<target>1.8</target>
 					<encoding>UTF-8</encoding>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
+						</path>
+					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
 
@@ -33,6 +46,44 @@
 	</build>
 
 	<dependencies>
+		<!-- Lombok for reducing boilerplate -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>${lombok.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- Cucumber BDD dependencies -->
+		<dependency>
+			<groupId>io.cucumber</groupId>
+			<artifactId>cucumber-java</artifactId>
+			<version>${cucumber.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>io.cucumber</groupId>
+			<artifactId>cucumber-testng</artifactId>
+			<version>${cucumber.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Cucumber PicoContainer for dependency injection -->
+		<dependency>
+			<groupId>io.cucumber</groupId>
+			<artifactId>cucumber-picocontainer</artifactId>
+			<version>${cucumber.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Allure Cucumber integration -->
+		<dependency>
+			<groupId>io.qameta.allure</groupId>
+			<artifactId>allure-cucumber7-jvm</artifactId>
+			<version>${allure.version}</version>
+			<scope>test</scope>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/io.rest-assured/rest-assured -->
 		<dependency>
 			<groupId>io.rest-assured</groupId>
@@ -90,14 +141,14 @@
 		<dependency>
 			<groupId>io.qameta.allure</groupId>
 			<artifactId>allure-testng</artifactId>
-			<version>2.17.3</version>
+			<version>${allure.version}</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/io.qameta.allure/allure-rest-assured -->
 		<dependency>
 			<groupId>io.qameta.allure</groupId>
 			<artifactId>allure-rest-assured</artifactId>
-			<version>2.17.3</version>
+			<version>${allure.version}</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/com.opencsv/opencsv -->
