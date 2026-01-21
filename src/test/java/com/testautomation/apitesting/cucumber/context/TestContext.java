@@ -58,9 +58,26 @@ public class TestContext {
         scenarioContext.put(key, value);
     }
 
+    /**
+     * Get value from scenario context with type safety.
+     * @param key The context key
+     * @param <T> The expected type
+     * @return The value cast to the expected type, or null if not found
+     * @throws ClassCastException if the value cannot be cast to the expected type
+     */
     @SuppressWarnings("unchecked")
     public <T> T getScenarioContext(String key) {
-        return (T) scenarioContext.get(key);
+        Object value = scenarioContext.get(key);
+        if (value == null) {
+            return null;
+        }
+        try {
+            return (T) value;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(
+                    String.format("Cannot cast value for key '%s' to expected type. Actual type: %s",
+                            key, value.getClass().getName()));
+        }
     }
 
     public boolean containsKey(String key) {

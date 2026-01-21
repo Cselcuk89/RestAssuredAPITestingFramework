@@ -11,6 +11,7 @@ import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,13 +64,23 @@ public class CucumberHooks {
         // Cleanup: Delete booking if it was created during the test
         if (testContext.getBookingId() != null && testContext.getAuthToken() != null) {
             try {
-                RestAssured.given()
+                Response cleanupResponse = RestAssured.given()
                         .header("Cookie", "token=" + testContext.getAuthToken())
                         .when()
                         .delete("/booking/{id}", testContext.getBookingId())
                         .then()
-                        .statusCode(201);
-                logger.info("Cleaned up booking with ID: {}", testContext.getBookingId());
+                        .extract()
+                        .response();
+                
+                int statusCode = cleanupResponse.getStatusCode();
+                // restful-booker API returns 201 for successful delete
+                if (statusCode == 200 || statusCode == 201 || statusCode == 204) {
+                    logger.info("Cleaned up booking with ID: {} (status: {})", 
+                            testContext.getBookingId(), statusCode);
+                } else {
+                    logger.warn("Cleanup returned unexpected status {} for booking ID: {}",
+                            statusCode, testContext.getBookingId());
+                }
             } catch (Exception e) {
                 logger.warn("Failed to cleanup booking: {}", e.getMessage());
             }

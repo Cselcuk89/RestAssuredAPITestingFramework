@@ -4,6 +4,7 @@ import com.testautomation.apitesting.cucumber.context.TestContext;
 import com.testautomation.apitesting.pojos.Auth;
 import com.testautomation.apitesting.pojos.Booking;
 import com.testautomation.apitesting.pojos.BookingDates;
+import com.testautomation.apitesting.utils.PropertyUtils;
 
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -16,6 +17,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.testng.Assert;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,15 +29,33 @@ import java.util.Map;
 public class BookingSteps {
 
     private static final Logger logger = LogManager.getLogger(BookingSteps.class);
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    
     private final TestContext testContext;
 
     public BookingSteps(TestContext testContext) {
         this.testContext = testContext;
     }
 
+    /**
+     * Generate dynamic check-in date (today + 7 days).
+     */
+    private String getCheckInDate() {
+        return LocalDate.now().plusDays(7).format(DATE_FORMATTER);
+    }
+
+    /**
+     * Generate dynamic check-out date (today + 14 days).
+     */
+    private String getCheckOutDate() {
+        return LocalDate.now().plusDays(14).format(DATE_FORMATTER);
+    }
+
     @Given("I am authenticated as admin user")
     public void iAmAuthenticatedAsAdminUser() {
-        Auth auth = new Auth("admin", "password123");
+        String username = PropertyUtils.getProperty("auth.username");
+        String password = PropertyUtils.getProperty("auth.password");
+        Auth auth = new Auth(username, password);
         
         Response authResponse = RestAssured.given()
                 .body(auth)
@@ -52,7 +73,7 @@ public class BookingSteps {
 
     @Given("I have a booking with firstname {string} and lastname {string}")
     public void iHaveABookingWithFirstnameAndLastname(String firstname, String lastname) {
-        BookingDates bookingDates = new BookingDates("2023-06-01", "2023-06-10");
+        BookingDates bookingDates = new BookingDates(getCheckInDate(), getCheckOutDate());
         Booking booking = new Booking(firstname, lastname, "breakfast", 150, true, bookingDates);
         testContext.setScenarioContext("booking", booking);
         logger.info("Created booking object with name: {} {}", firstname, lastname);
@@ -117,7 +138,7 @@ public class BookingSteps {
         Assert.assertNotNull(token, "Auth token should not be null");
 
         Booking originalBooking = testContext.getScenarioContext("booking");
-        BookingDates bookingDates = new BookingDates("2023-06-01", "2023-06-10");
+        BookingDates bookingDates = new BookingDates(getCheckInDate(), getCheckOutDate());
         Booking updatedBooking = new Booking(
                 newFirstname,
                 originalBooking.getLastname(),
