@@ -13,6 +13,35 @@
 - **Allure Reporting**: Integrated reporting for both TestNG and Cucumber tests
 - **Retry Mechanism**: Built-in test retry for flaky tests
 
+### Supported APIs
+
+#### Restful Booker API (https://restful-booker.herokuapp.com)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/auth` | POST | Create authentication token |
+| `/booking` | GET | Get all booking IDs |
+| `/booking` | POST | Create a new booking |
+| `/booking/{id}` | GET | Get booking by ID |
+| `/booking/{id}` | PUT | Update booking |
+| `/booking/{id}` | PATCH | Partial update booking |
+| `/booking/{id}` | DELETE | Delete booking |
+| `/ping` | GET | Health check endpoint |
+
+#### Postman Echo API (http://postman-echo.com)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/get` | GET | Echo GET request |
+| `/post` | POST | Echo POST request with body |
+| `/put` | PUT | Echo PUT request |
+| `/patch` | PATCH | Echo PATCH request |
+| `/delete` | DELETE | Echo DELETE request |
+| `/headers` | GET | Get request headers |
+| `/cookies` | GET | Get request cookies |
+| `/cookies/set` | GET | Set cookies |
+| `/status/{code}` | GET | Return specific status code |
+| `/basic-auth` | GET | Test basic authentication |
+| `/ip` | GET | Get client IP |
+
 ### Project Structure
 ```
 src/test/java/com/testautomation/apitesting/
@@ -23,23 +52,54 @@ src/test/java/com/testautomation/apitesting/
 │   ├── hooks/           # Setup/teardown hooks
 │   ├── runner/          # TestNG Cucumber runner
 │   └── steps/           # Step definitions
+│       ├── BookingSteps.java      # Booking API steps
+│       ├── HealthCheckSteps.java  # Health check steps
+│       └── PostmanEchoSteps.java  # Postman Echo steps
 ├── exceptions/          # Custom exceptions
 ├── listener/            # TestNG listeners
 ├── pojos/               # Request/Response models
+│   ├── Auth.java
+│   ├── Booking.java
+│   ├── BookingDates.java
+│   ├── EchoResponse.java
+│   ├── CookiesResponse.java
+│   ├── HeadersResponse.java
+│   └── IpResponse.java
 ├── tests/               # TestNG test classes
+│   ├── HealthCheckTest.java
+│   ├── PostmanEchoTest.java
+│   └── ...
 └── utils/               # Utilities and helpers
 
 src/test/resources/
 ├── features/            # Cucumber feature files
+│   ├── booking.feature
+│   ├── healthcheck.feature
+│   └── postman-echo.feature
 ├── config.properties    # Configuration properties
 └── ...                  # Test data files
 ```
 
 ### Running Tests
 
+#### Run All Tests
+```bash
+mvn test -Dsuitefilename=suites/all-tests-suite.xml
+```
+
 #### Run Cucumber BDD Tests
 ```bash
 mvn test -Dsuitefilename=suites/cucumber-suite.xml
+```
+
+#### Run Postman Echo Tests
+```bash
+mvn test -Dsuitefilename=suites/postman-echo-suite.xml
+```
+
+#### Run Health Check Tests
+```bash
+mvn test -Dsuitefilename=suites/healthcheck-suite.xml
 ```
 
 #### Run with specific tags
