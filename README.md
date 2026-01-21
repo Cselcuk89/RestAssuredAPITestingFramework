@@ -1,5 +1,64 @@
 #### Rest Assured API Automation Testing Framework
 
+## Framework Features
+
+### Industry Best Practices Implemented
+- **Cucumber BDD Layer**: Feature files with Gherkin syntax for readable test scenarios
+- **Builder Pattern**: `ApiClient` class for flexible request configuration
+- **Page Object Model equivalent**: Centralized API endpoints in `Endpoints` class
+- **Environment Configuration**: Multi-environment support (dev, staging, prod)
+- **Custom Exceptions**: `ApiException` for better error handling and debugging
+- **Response Validation**: Fluent `ResponseValidator` utility for clean assertions
+- **Test Context**: Shared state management for Cucumber scenarios
+- **Allure Reporting**: Integrated reporting for both TestNG and Cucumber tests
+- **Retry Mechanism**: Built-in test retry for flaky tests
+
+### Project Structure
+```
+src/test/java/com/testautomation/apitesting/
+├── client/              # API client abstraction
+│   └── ApiClient.java   # Builder pattern for API requests
+├── cucumber/            # Cucumber BDD layer
+│   ├── context/         # Test context for state management
+│   ├── hooks/           # Setup/teardown hooks
+│   ├── runner/          # TestNG Cucumber runner
+│   └── steps/           # Step definitions
+├── exceptions/          # Custom exceptions
+├── listener/            # TestNG listeners
+├── pojos/               # Request/Response models
+├── tests/               # TestNG test classes
+└── utils/               # Utilities and helpers
+
+src/test/resources/
+├── features/            # Cucumber feature files
+├── config.properties    # Configuration properties
+└── ...                  # Test data files
+```
+
+### Running Tests
+
+#### Run Cucumber BDD Tests
+```bash
+mvn test -Dsuitefilename=suites/cucumber-suite.xml
+```
+
+#### Run with specific tags
+```bash
+mvn test -Dcucumber.filter.tags="@smoke" -Dsuitefilename=suites/cucumber-suite.xml
+```
+
+#### Run with specific environment
+```bash
+mvn test -Denv=staging -Dsuitefilename=suites/cucumber-suite.xml
+```
+
+#### Run TestNG Tests
+```bash
+mvn test -Dsuitefilename=testng.xml
+```
+
+---
+
 * ## API Automation Testing Using Rest Assured Full Course Part-01 - https://www.youtube.com/watch?v=o9KJhGHl49M&list=PLUeDIlio4THGL7lQXQwxsV9re_i0U2b0Q&index=3
 * ## API Automation Testing Using Rest Assured Full Course Part-02 - https://www.youtube.com/watch?v=kay86__5eTg&list=PLUeDIlio4THGL7lQXQwxsV9re_i0U2b0Q&index=4
 
